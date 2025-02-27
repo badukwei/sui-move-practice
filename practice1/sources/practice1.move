@@ -1,7 +1,4 @@
 module practice1::practice1 {
-    use sui::object::{Self, UID};
-    use sui::tx_context::{Self, TxContext};
-    use sui::transfer;
     use std::string::String;
 
     // struct
@@ -31,17 +28,23 @@ module practice1::practice1 {
         }, tx_context::sender(ctx));
     }
 
-    public fun create_bill(_: &OwnerCap, price: u64, name: String, ctx: &mut TxContext): Bill {
+    public entry fun add_owner(_: &OwnerCap, new_owner_address: address, ctx: &mut TxContext) {
+        transfer::transfer(OwnerCap {
+            id: object::new(ctx),
+        }, new_owner_address);
+    }
+
+    public entry fun create_bill(_: &OwnerCap, price: u64, name: String, ctx: &mut TxContext) {
         let bill = Bill {
             id: object::new(ctx),
             price,
             name,
         };
 
-        bill
+        transfer::transfer(bill, tx_context::sender(ctx));
     }
 
-    public fun request_bill(bill: Bill, intended_address: address, ctx: &mut TxContext) {
+    public entry fun request_bill(bill: Bill, intended_address: address, ctx: &mut TxContext) {
         let folder = Folder {
             id: object::new(ctx),
             bill,
@@ -51,7 +54,7 @@ module practice1::practice1 {
         transfer::transfer(folder, intended_address)
     }
 
-    public fun unpack_bill(folder: Folder, ctx: &mut TxContext): Bill {
+    public entry fun unpack_bill(folder: Folder, ctx: &mut TxContext) {
         assert!(folder.intended_address == tx_context::sender(ctx), EWrongAddress);
 
         let Folder {
@@ -60,8 +63,28 @@ module practice1::practice1 {
             intended_address: _,
         } = folder;
 
-          
+        transfer::transfer(bill, tx_context::sender(ctx));
         object::delete(id);
-        bill
+    }
+
+    public entry fun delete_bill(_: &OwnerCap, bill: Bill) {
+        let Bill { id, price: _, name: _ } = bill;
+        object::delete(id);
+    }
+
+    public entry fun update_bill_price(_: &OwnerCap, bill: &mut Bill, new_price: u64) {
+        bill.price = new_price;
+    }
+
+    public entry fun update_bill_name(_: &OwnerCap, bill: &mut Bill, new_name: String) {
+        bill.name = new_name;
+    }
+
+    public fun view_price(bill: &Bill): u64{
+        bill.price
+    }
+
+    public fun view_name(bill: &Bill): String{
+        bill.name
     }
 }
