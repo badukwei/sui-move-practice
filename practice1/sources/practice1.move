@@ -1,4 +1,4 @@
-module practice1::practice1 {
+module practice1::objects {
     use std::string::String;
 
     // struct

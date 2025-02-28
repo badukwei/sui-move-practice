@@ -1,5 +1,4 @@
-module practice2::storage {
-    use std::string::String;
+module practice2::generics {
 
     public struct Box {
         value: u64
